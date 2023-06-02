@@ -56,7 +56,7 @@ async function run() {
 
     app.post('/jwt', (req, res) =>{
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 
       res.send({ token })
 
@@ -66,6 +66,23 @@ async function run() {
     // User Related APIs
     app.get('/users', async(req, res)=>{
       const result = await usersCollection.find().toArray();
+      res.send(result)
+    })
+
+    // Security label:1 verifyJWT
+    // email same
+    // check admin
+    app.get('/users/admin/:email',verifyJWT, async(req, res)=>{
+      const email = req.params.email;
+
+      const decodedEmail = req.decoded.email;
+      if(email != decodedEmail){
+        return res.status(403).send({error: true, message: 'Forbidden access'})
+      }
+
+      const query = {email: email}
+      const user = usersCollection.findOne(query);
+      const result = {admin: user?.role === 'admin'}
       res.send(result)
     })
 
