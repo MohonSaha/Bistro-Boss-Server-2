@@ -16,7 +16,6 @@ const verifyJWT = (req, res, next) =>{
   if(!authorization){
     return res.status(401).send({error: true, message: 'unauthorized access'})
   }
-
   // bearer token
   const token = authorization.split(' ')[1];
 
@@ -57,9 +56,7 @@ async function run() {
     app.post('/jwt', (req, res) =>{
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-
       res.send({ token })
-
     })
 
 
@@ -72,18 +69,17 @@ async function run() {
     // Security label:1 verifyJWT
     // email same
     // check admin
-    app.get('/users/admin/:email',verifyJWT, async(req, res)=>{
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
 
-      const decodedEmail = req.decoded.email;
-      if(email != decodedEmail){
-        return res.status(403).send({error: true, message: 'Forbidden access'})
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
       }
 
-      const query = {email: email}
-      const user = usersCollection.findOne(query);
-      const result = {admin: user?.role === 'admin'}
-      res.send(result)
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
     })
 
 
@@ -92,7 +88,6 @@ async function run() {
 
       const query = {email: user.email}
       const existingUser = await usersCollection.findOne(query);
-      console.log("Existing user",existingUser);
       if(existingUser){
         return res.send({message: 'User Already Exist!!'})
       }
